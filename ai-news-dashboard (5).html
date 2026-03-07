@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI News</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: #f4f5f7;
+    color: #1a1a2e;
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: 240px;
+    min-height: 100vh;
+    background: #fff;
+    border-right: 1px solid #e8eaed;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+  }
+
+  .user-section {
+    padding: 1.5rem 1.25rem 1rem;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  .user-avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: #e8642c;
+    color: white;
+    font-weight: 700;
+    font-size: 0.95rem;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 0.6rem;
+  }
+
+  .user-email {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #1a1a2e;
+    margin-bottom: 0.15rem;
+  }
+
+  .user-sub {
+    font-size: 0.72rem;
+    color: #8a8fa3;
+  }
+
+  .edit-icon {
+    margin-top: 0.4rem;
+    font-size: 0.75rem;
+    color: #b0b4c1;
+    cursor: pointer;
+  }
+
+  .nav {
+    padding: 0.75rem 0;
+    flex: 1;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.65rem 1.25rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #5a5f72;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-decoration: none;
+    border-left: 3px solid transparent;
+  }
+
+  .nav-item:hover { background: #fdf5f2; color: #e8642c; }
+
+  .nav-item.active {
+    background: #fef3ee;
+    color: #e8642c;
+    border-left-color: #e8642c;
+    font-weight: 600;
+  }
+
+  .nav-icon { font-size: 1rem; width: 20px; text-align: center; }
+
+  /* ── MAIN ── */
+  .main {
+    flex: 1;
+    padding: 2rem 2.5rem;
+    overflow-x: hidden;
+  }
+
+  .page-view { display: none; }
+  .page-view.active { display: block; animation: fadeIn 0.2s ease; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .page-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: 1.5rem;
+  }
+
+  .content-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 1.75rem;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+    gap: 1rem;
+  }
+
+  .card-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1a1a2e;
+    flex-shrink: 0;
+  }
+
+  .btn-create {
+    background: #e8642c;
+    color: white;
+    border: none;
+    padding: 0.6rem 1.25rem;
+    border-radius: 8px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+  }
+
+  .btn-create:hover { background: #d45520; transform: translateY(-1px); }
+  .btn-create:active { transform: translateY(0); }
+
+  /* ── TABS ── */
+  .tabs {
+    display: flex;
+    border-bottom: 2px solid #f0f0f0;
+    margin-bottom: 1.75rem;
+  }
+
+  .tab {
+    padding: 0.6rem 1.1rem;
+    font-size: 0.83rem;
+    font-weight: 500;
+    color: #8a8fa3;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .tab:hover { color: #e8642c; }
+
+  .tab.active {
+    color: #e8642c;
+    border-bottom-color: #e8642c;
+    font-weight: 600;
+  }
+
+  /* ── NEWS GRID ── */
+  .news-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.25rem;
+  }
+
+  .news-card {
+    border: 1.5px solid #e8eaed;
+    border-radius: 10px;
+    padding: 1.25rem 1.4rem;
+    background: #fff;
+    transition: box-shadow 0.2s, border-color 0.2s, transform 0.2s;
+    cursor: pointer;
+  }
+
+  .news-card:hover {
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+    border-color: #e8642c;
+    transform: translateY(-2px);
+  }
+
+  .news-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: 0.4rem;
+    letter-spacing: 0.01em;
+  }
+
+  .news-desc {
+    font-size: 0.8rem;
+    color: #5a5f72;
+    margin-bottom: 1rem;
+    line-height: 1.5;
+  }
+
+  .news-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-bottom: 1rem;
+  }
+
+  .meta-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.76rem;
+    color: #8a8fa3;
+  }
+
+  .meta-icon { font-size: 0.8rem; color: #b0b4c1; width: 14px; }
+
+  .news-footer {
+    padding-top: 0.85rem;
+    border-top: 1px solid #f3f4f6;
+    font-size: 0.74rem;
+    color: #8a8fa3;
+    line-height: 1.6;
+  }
+
+  .divider {
+    border: none;
+    border-top: 1px solid #e8eaed;
+    opacity: 0.4;
+    margin: 0.85rem 0;
+  }
+
+  .empty-state {
+    display: none;
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #b0b4c1;
+    font-size: 0.85rem;
+  }
+
+  .empty-state .empty-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+
+  /* ── DETAIL PAGE ── */
+  .back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #8a8fa3;
+    cursor: pointer;
+    margin-bottom: 1.25rem;
+    transition: color 0.15s;
+    background: none;
+    border: none;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    padding: 0;
+  }
+
+  .back-btn:hover { color: #e8642c; }
+
+  .detail-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    overflow: hidden;
+  }
+
+  .detail-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.5rem 1.75rem;
+    border-bottom: 1px solid #f0f0f0;
+    gap: 1rem;
+  }
+
+  .detail-card-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1a1a2e;
+  }
+
+  .detail-body {
+    padding: 2rem 1.75rem;
+  }
+
+  .detail-announcement-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #1a1a2e;
+    line-height: 1.4;
+    margin-bottom: 1.75rem;
+  }
+
+  .detail-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .detail-field {
+    display: flex;
+    align-items: flex-start;
+    padding: 0.9rem 0;
+    border-bottom: 1px solid #f3f4f6;
+    gap: 1rem;
+  }
+
+  .detail-field:last-child { border-bottom: none; }
+
+  .detail-field-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #b0b4c1;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    width: 110px;
+    flex-shrink: 0;
+    padding-top: 1px;
+  }
+
+  .detail-field-value {
+    font-size: 0.85rem;
+    color: #1a1a2e;
+    line-height: 1.5;
+  }
+
+  .detail-field-value.muted { color: #8a8fa3; }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.25rem 0.7rem;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    background: #e8f5e9;
+    color: #1a7a45;
+  }
+
+  .status-badge::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #1a7a45;
+  }
+
+  /* ── EDIT PAGE ── */
+  .edit-field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+  }
+
+  .edit-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .edit-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #8a8fa3;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .edit-input,
+  .edit-textarea {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 0.875rem;
+    color: #1a1a2e;
+    background: #f9fafb;
+    border: 1.5px solid #e8eaed;
+    border-radius: 8px;
+    padding: 0.7rem 0.95rem;
+    width: 100%;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    resize: none;
+    line-height: 1.55;
+  }
+
+  .edit-input:focus,
+  .edit-textarea:focus {
+    outline: none;
+    border-color: #e8642c;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(232,100,44,0.1);
+  }
+
+  .edit-textarea { min-height: 110px; }
+
+  .edit-card-footer {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 0.75rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid #f0f0f0;
+  }
+
+  .btn-cancel {
+    background: white;
+    color: #e8642c;
+    border: 1.5px solid #e8642c;
+    padding: 0.6rem 1.4rem;
+    border-radius: 8px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .btn-cancel:hover { background: #fff3ee; }
+
+  .btn-save {
+    background: #e8642c;
+    color: white;
+    border: none;
+    padding: 0.6rem 1.4rem;
+    border-radius: 8px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+  }
+
+  .btn-save:hover { background: #d45520; transform: translateY(-1px); }
+  .btn-save:active { transform: translateY(0); }
+
+  /* ── POPUP MODAL ── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.35);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s ease;
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal-box {
+    background: #fff;
+    border-radius: 14px;
+    padding: 2rem 2rem 1.5rem;
+    width: 100%;
+    max-width: 380px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+    animation: popIn 0.2s ease;
+    text-align: center;
+  }
+
+  @keyframes popIn {
+    from { opacity: 0; transform: scale(0.93); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+
+  .modal-icon {
+    font-size: 2.2rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .modal-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: 0.6rem;
+  }
+
+  .modal-message {
+    font-size: 0.83rem;
+    color: #5a5f72;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+  }
+
+  .modal-actions {
+    display: flex;
+    justify-content: center;
+  }
+
+  .btn-modal-ok {
+    background: #e8642c;
+    color: white;
+    border: none;
+    padding: 0.65rem 2.5rem;
+    border-radius: 8px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+  }
+
+  .btn-modal-ok:hover { background: #d45520; transform: translateY(-1px); }
+  .btn-modal-ok:active { transform: translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="user-section">
+    <div class="user-avatar">M</div>
+    <div class="user-email">mis.intern&#64;i-city.my</div>
+    <div class="user-sub">mis.intern&#64;i-city.my</div>
+    <div class="edit-icon">✏️</div>
+  </div>
+
+  <nav class="nav">
+    <a class="nav-item" href="#" onclick="navigateTo('gossip', this); return false;">
+      <span class="nav-icon">🎉</span> Gossip
+    </a>
+    <a class="nav-item" href="#" onclick="navigateTo('event', this); return false;">
+      <span class="nav-icon">🚀</span> Event
+    </a>
+    <a class="nav-item active" href="#" onclick="navigateTo('ainews', this); return false;">
+      <span class="nav-icon">🤖</span> AI News
+    </a>
+    <a class="nav-item" href="#" onclick="navigateTo('announcement', this); return false;">
+      <span class="nav-icon">📢</span> Announcement
+    </a>
+    <a class="nav-item" href="#" onclick="navigateTo('logout', this); return false;">
+      <span class="nav-icon">🚪</span> Logout
+    </a>
+  </nav>
+</aside>
+
+<!-- MAIN CONTENT -->
+<main class="main">
+
+  <!-- ══ AI NEWS PAGE ══ -->
+  <div class="page-view active" id="page-ainews">
+    <div class="page-title">AI News</div>
+    <div class="content-card">
+      <div class="card-header">
+        <div class="card-title">AI News</div>
+        <button class="btn-create" onclick="alert('Create AI News clicked!')">Create AI</button>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab(this, 'active', 'ainews-grid', 'ainews-empty')">Active</div>
+        <div class="tab" onclick="switchTab(this, 'unpublished', 'ainews-grid', 'ainews-empty')">Unpublished</div>
+        <div class="tab" onclick="switchTab(this, 'pending', 'ainews-grid', 'ainews-empty')">Pending</div>
+        <div class="tab" onclick="switchTab(this, 'rejected', 'ainews-grid', 'ainews-empty')">Rejected</div>
+        <div class="tab" onclick="switchTab(this, 'expired', 'ainews-grid', 'ainews-empty')">Expired</div>
+      </div>
+
+      <div class="news-grid" id="ainews-grid">
+        <div class="news-card" data-status="active">
+          <div class="news-title">HIDAYAH TESTING</div>
+          <div class="news-desc">i-Genius information testing</div>
+          <div class="news-meta">
+            <div class="meta-row"><span class="meta-icon">📅</span><span>2025-12-01 – 2026-12-24</span></div>
+            <div class="meta-row"><span class="meta-icon">#</span><span>Staycation</span></div>
+            <div class="meta-row"><span class="meta-icon">📍</span><span>Wyndham Garden</span></div>
+            <div class="meta-row"><span class="meta-icon">📍</span><span>–</span></div>
+          </div>
+          <div class="news-footer">Author: mis.intern&#64;i-city.my<br>Email: mis.intern&#64;i-city.my</div>
+        </div>
+
+        <div class="news-card" data-status="active">
+          <div class="news-title">BROOOOO</div>
+          <div class="news-desc">70% off on all items - extended!</div>
+          <div class="news-meta">
+            <div class="meta-row"><span class="meta-icon">📅</span><span>2025-11-15 – 2026-11-22</span></div>
+            <div class="meta-row"><span class="meta-icon">#</span><span>Others</span></div>
+            <div class="meta-row"><span class="meta-icon">📍</span><span>DoubleTree by Hilton</span></div>
+            <div class="meta-row"><span class="meta-icon">📍</span><span>Near Shah Alam mall</span></div>
+          </div>
+          <div class="news-footer">Author: mis.intern&#64;i-city.my<br>Email: mis.intern&#64;i-city.my</div>
+        </div>
+
+        <div class="news-card" data-status="unpublished">
+          <div class="news-title">DRAFT ARTICLE</div>
+          <div class="news-desc">This article is saved but not yet published.</div>
+          <div class="news-meta">
+            <div class="meta-row"><span class="meta-icon">📅</span><span>2026-01-10 – 2026-06-01</span></div>
+            <div class="meta-row"><span class="meta-icon">#</span><span>Technology</span></div>
+            <div class="meta-row"><span class="meta-icon">📍</span><span>i-City Shah Alam</span></div>
+          </div>
+          <div class="news-footer">Author: mis.intern&#64;i-city.my<br>Email: mis.intern&#64;i-city.my</div>
+        </div>
+
+        <div class="news-card" data-status="pending">
+          <div class="news-title">PENDING REVIEW</div>
+          <div class="news-desc">Awaiting admin approval before going live.</div>
+          <div class="news-meta">
+            <div class="meta-row"><span class="meta-icon">📅</span><span>2026-02-01 – 2026-08-01</span></div>
+            <div class="meta-row"><span class="meta-icon">#</span><span>Promotion</span></div>
+            <div class="meta-row"><span class="meta-icon">📍</span><span>Central Mall</span></div>
+          </div>
+          <div class="news-footer">Author: mis.intern&#64;i-city.my<br>Email: mis.intern&#64;i-city.my</div>
+        </div>
+
+        <div class="news-card" data-status="rejected">
+          <div class="news-title">REJECTED POST</div>
+          <div class="news-desc">This submission did not meet publication guidelines.</div>
+          <div class="news-meta">
+            <div class="meta-row"><span class="meta-icon">📅</span><span>2025-09-01 – 2025-12-01</span></div>
+            <div class="meta-row"><span class="meta-icon">#</span><span>Events</span></div>
+            <div class="meta-row"><span class="meta-icon">📍</span><span>i-City Park</span></div>
+          </div>
+          <div class="news-footer">Author: mis.intern&#64;i-city.my<br>Email: mis.intern&#64;i-city.my</div>
+        </div>
+
+        <div class="news-card" data-status="expired">
+          <div class="news-title">EXPIRED PROMO</div>
+          <div class="news-desc">This promotion has ended and is no longer active.</div>
+          <div class="news-meta">
+            <div class="meta-row"><span class="meta-icon">📅</span><span>2025-01-01 – 2025-06-30</span></div>
+            <div class="meta-row"><span class="meta-icon">#</span><span>Discount</span></div>
+            <div class="meta-row"><span class="meta-icon">📍</span><span>Wyndham Garden</span></div>
+          </div>
+          <div class="news-footer">Author: mis.intern&#64;i-city.my<br>Email: mis.intern&#64;i-city.my</div>
+        </div>
+      </div>
+
+      <div class="empty-state" id="ainews-empty">
+        <div class="empty-icon">📭</div>
+        No items in this category yet.
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ ANNOUNCEMENT PAGE ══ -->
+  <div class="page-view" id="page-announcement">
+    <div class="page-title">SuperApp Announcement</div>
+    <div class="content-card">
+      <div class="card-header">
+        <div class="card-title">SuperApp Announcement</div>
+        <button class="btn-create" onclick="navigateTo('announcement-create', null)">Create New SuperApp Announcement</button>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active">Active Announcement</div>
+      </div>
+
+      <div class="news-grid">
+        <div class="news-card" onclick="navigateTo('announcement-detail', null)">
+          <div class="news-title">"RAYA RAYA RAYA PROMO 50% DISCOUNT FOR DIGITAL SPORT ARENA"</div>
+          <hr class="divider" style="margin-top: 0.75rem;">
+          <div class="news-footer">Author: mis.intern&#64;i-city.my<br>📅 Date: 2025-03-06</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ ANNOUNCEMENT DETAIL PAGE ══ -->
+  <div class="page-view" id="page-announcement-detail">
+    <button class="back-btn" onclick="navigateTo('announcement', null)">← Back to Announcement</button>
+    <div class="page-title">SuperApp Announcement</div>
+    <div class="detail-card">
+      <div class="detail-card-header">
+        <div class="detail-card-title">Announcement Detail</div>
+        <button class="btn-create" onclick="navigateTo('announcement-edit', null)">Edit</button>
+      </div>
+      <div class="detail-body">
+        <div class="detail-announcement-title">"RAYA RAYA RAYA PROMO 50% DISCOUNT FOR DIGITAL SPORT ARENA"</div>
+        <div class="detail-fields">
+          <div class="detail-field">
+            <div class="detail-field-label">Status</div>
+            <div class="detail-field-value"><span class="status-badge">Active</span></div>
+          </div>
+          <div class="detail-field">
+            <div class="detail-field-label">Date</div>
+            <div class="detail-field-value">2025-03-06</div>
+          </div>
+          <div class="detail-field">
+            <div class="detail-field-label">Author</div>
+            <div class="detail-field-value">mis.intern&#64;i-city.my</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ ANNOUNCEMENT EDIT PAGE ══ -->
+  <div class="page-view" id="page-announcement-edit">
+    <button class="back-btn" onclick="navigateTo('announcement-detail', null)">← Back to Detail</button>
+    <div class="page-title">SuperApp Announcement</div>
+    <div class="detail-card">
+      <div class="detail-card-header">
+        <div class="detail-card-title">Edit Announcement</div>
+      </div>
+      <div class="detail-body">
+        <div class="edit-field-group">
+
+          <div class="edit-field">
+            <label class="edit-label">Announcement Title</label>
+            <textarea class="edit-textarea" id="edit-title" rows="2" oninput="autoQuote(this)">RAYA RAYA RAYA PROMO 50% DISCOUNT FOR DIGITAL SPORT ARENA</textarea>
+          </div>
+
+          <div class="edit-field">
+            <label class="edit-label">Date</label>
+            <input class="edit-input" type="text" value="2025-03-06" disabled style="opacity:0.5; cursor:not-allowed;">
+            <span style="font-size:0.7rem; color:#b0b4c1; margin-top:0.25rem;">Auto-detected from system</span>
+          </div>
+
+          <div class="edit-field">
+            <label class="edit-label">Author</label>
+            <input class="edit-input" type="text" value="mis.intern@i-city.my" disabled style="opacity:0.5; cursor:not-allowed;">
+            <span style="font-size:0.7rem; color:#b0b4c1; margin-top:0.25rem;">Auto-detected from account</span>
+          </div>
+
+        </div>
+
+        <div class="edit-card-footer">
+          <button class="btn-cancel" onclick="navigateTo('announcement-detail', null)">Cancel</button>
+          <button class="btn-save" onclick="saveAnnouncement()">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ ANNOUNCEMENT CREATE PAGE ══ -->
+  <div class="page-view" id="page-announcement-create">
+    <button class="back-btn" onclick="navigateTo('announcement', null)">← Back to Announcement</button>
+    <div class="page-title">SuperApp Announcement</div>
+    <div class="detail-card">
+      <div class="detail-card-header">
+        <div class="detail-card-title">Create New Announcement</div>
+      </div>
+      <div class="detail-body">
+        <div class="edit-field-group">
+
+          <div class="edit-field">
+            <label class="edit-label">Announcement Title</label>
+            <textarea class="edit-textarea" id="create-title" rows="2" placeholder='Type your announcement here...' oninput="autoQuote(this)"></textarea>
+          </div>
+
+          <div class="edit-field">
+            <label class="edit-label">Date</label>
+            <input class="edit-input" type="text" value="2025-03-06" disabled style="opacity:0.5; cursor:not-allowed;">
+            <span style="font-size:0.7rem; color:#b0b4c1; margin-top:0.25rem;">Auto-detected from system</span>
+          </div>
+
+          <div class="edit-field">
+            <label class="edit-label">Author</label>
+            <input class="edit-input" type="text" value="mis.intern@i-city.my" disabled style="opacity:0.5; cursor:not-allowed;">
+            <span style="font-size:0.7rem; color:#b0b4c1; margin-top:0.25rem;">Auto-detected from account</span>
+          </div>
+
+        </div>
+
+        <div class="edit-card-footer">
+          <button class="btn-cancel" onclick="navigateTo('announcement', null)">Cancel</button>
+          <button class="btn-save" onclick="saveNewAnnouncement()">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ GOSSIP PAGE (placeholder) ══ -->
+  <div class="page-view" id="page-gossip">
+    <div class="page-title">Gossip</div>
+    <div class="content-card">
+      <div class="card-header">
+        <div class="card-title">Gossip</div>
+        <button class="btn-create">Create Gossip</button>
+      </div>
+      <div class="empty-state" style="display:block;">
+        <div class="empty-icon">🎉</div>
+        No gossip yet. Be the first to post!
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ EVENT PAGE (placeholder) ══ -->
+  <div class="page-view" id="page-event">
+    <div class="page-title">Event</div>
+    <div class="content-card">
+      <div class="card-header">
+        <div class="card-title">Event</div>
+        <button class="btn-create">Create Event</button>
+      </div>
+      <div class="empty-state" style="display:block;">
+        <div class="empty-icon">🚀</div>
+        No events scheduled yet.
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ── SAVE CONFIRMATION MODAL ── -->
+<div class="modal-overlay" id="save-modal">
+  <div class="modal-box">
+    <div class="modal-icon">📢</div>
+    <div class="modal-title">Save Announcement?</div>
+    <div class="modal-message">If you click OK, this will replace the current announcement with your new changes.</div>
+    <div class="modal-actions">
+      <button class="btn-modal-ok" onclick="confirmSave()"><strong>OK</strong></button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function navigateTo(page, navEl) {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    if (navEl) {
+      navEl.classList.add('active');
+    } else if (['announcement-detail','announcement-edit','announcement-create'].includes(page)) {
+      document.querySelectorAll('.nav-item').forEach(n => {
+        if (n.textContent.trim().includes('Announcement')) n.classList.add('active');
+      });
+    }
+    document.querySelectorAll('.page-view').forEach(p => p.classList.remove('active'));
+    const target = document.getElementById('page-' + page);
+    if (target) target.classList.add('active');
+    if (page === 'ainews') filterCards('active', 'ainews-grid', 'ainews-empty');
+  }
+
+  function saveAnnouncement() {
+    document.getElementById('save-modal').classList.add('open');
+  }
+
+  function confirmSave() {
+    document.getElementById('save-modal').classList.remove('open');
+    navigateTo('announcement-detail', null);
+  }
+
+  function autoQuote(el) {
+    let raw = el.value;
+    // Strip existing surrounding quotes first
+    if (raw.startsWith('"')) raw = raw.slice(1);
+    if (raw.endsWith('"')) raw = raw.slice(0, -1);
+    if (raw === '') {
+      el.value = '';
+      return;
+    }
+    // Store cursor position relative to inner text
+    const pos = el.selectionStart;
+    el.value = '"' + raw + '"';
+    // Restore cursor inside the quotes
+    const newPos = Math.min(pos + 1, el.value.length - 1);
+    el.setSelectionRange(newPos, newPos);
+  }
+
+  function saveNewAnnouncement() {
+    const title = document.getElementById('create-title').value.trim();
+    if (!title || title === '""') {
+      alert('Please enter an announcement title.');
+      return;
+    }
+    document.getElementById('save-modal').classList.add('open');
+  }
+
+  function switchTab(el, status, gridId, emptyId) {
+    el.closest('.tabs').querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    filterCards(status, gridId, emptyId);
+  }
+
+  function filterCards(status, gridId, emptyId) {
+    const grid = document.getElementById(gridId);
+    if (!grid) return;
+    const cards = grid.querySelectorAll('.news-card');
+    let visible = 0;
+    cards.forEach(card => {
+      const show = card.dataset.status === status;
+      card.style.display = show ? 'block' : 'none';
+      if (show) visible++;
+    });
+    const empty = document.getElementById(emptyId);
+    if (empty) empty.style.display = visible === 0 ? 'block' : 'none';
+  }
+
+  filterCards('active', 'ainews-grid', 'ainews-empty');
+
+  // Pre-quote the edit textarea on load
+  window.addEventListener('load', () => {
+    const el = document.getElementById('edit-title');
+    if (el) autoQuote(el);
+  });
+</script>
+</body>
+</html>
