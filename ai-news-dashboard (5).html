@@ -667,9 +667,12 @@
 
       <div class="news-grid">
         <div class="news-card" onclick="navigateTo('announcement-detail', null)">
-          <div class="news-title">"50% DISCOUNT: Raya Special at Digital Sport Arena"</div>
+          <div class="news-title" id="ann-card-title"></div>
           <hr class="divider" style="margin-top: 0.75rem;">
-          <div class="news-footer">Author: mis.intern&#64;i-city.my<br>📅 Publish Date: 2026-03-06</div>
+          <div class="news-footer">
+            <span id="ann-card-author"></span><br>
+            <span id="ann-card-date"></span>
+          </div>
         </div>
       </div>
     </div>
@@ -685,7 +688,7 @@
         <button class="btn-create" onclick="navigateTo('announcement-edit', null)">Edit</button>
       </div>
       <div class="detail-body">
-        <div class="detail-announcement-title">"50% DISCOUNT: Raya Special at Digital Sport Arena"</div>
+        <div class="detail-announcement-title" id="detail-title"></div>
         <div class="detail-fields">
           <div class="detail-field">
             <div class="detail-field-label">Status</div>
@@ -693,11 +696,11 @@
           </div>
           <div class="detail-field">
             <div class="detail-field-label">Date</div>
-            <div class="detail-field-value">2026-03-06</div>
+            <div class="detail-field-value" id="detail-date"></div>
           </div>
           <div class="detail-field">
             <div class="detail-field-label">Author</div>
-            <div class="detail-field-value">mis.intern&#64;i-city.my</div>
+            <div class="detail-field-value" id="detail-author"></div>
           </div>
         </div>
       </div>
@@ -717,18 +720,18 @@
 
           <div class="edit-field">
             <label class="edit-label">Announcement Title</label>
-            <textarea class="edit-textarea" id="edit-title" rows="2" oninput="autoQuote(this)">50% DISCOUNT: Raya Special at Digital Sport Arena</textarea>
+            <textarea class="edit-textarea" id="edit-title" rows="2" oninput="autoQuote(this)">RAYA RAYA RAYA PROMO 50% DISCOUNT FOR DIGITAL SPORT ARENA</textarea>
           </div>
 
           <div class="edit-field">
             <label class="edit-label">Date</label>
-            <input class="edit-input" type="text" value="2026-03-06" disabled style="opacity:0.5; cursor:not-allowed;">
+            <input class="edit-input" id="edit-date-display" type="text" disabled style="opacity:0.5; cursor:not-allowed;">
             <span style="font-size:0.7rem; color:#b0b4c1; margin-top:0.25rem;">Auto-detected from system</span>
           </div>
 
           <div class="edit-field">
             <label class="edit-label">Author</label>
-            <input class="edit-input" type="text" value="mis.intern@i-city.my" disabled style="opacity:0.5; cursor:not-allowed;">
+            <input class="edit-input" id="edit-author-display" type="text" disabled style="opacity:0.5; cursor:not-allowed;">
             <span style="font-size:0.7rem; color:#b0b4c1; margin-top:0.25rem;">Auto-detected from account</span>
           </div>
 
@@ -817,7 +820,7 @@
   <div class="modal-box">
     <div class="modal-icon">📢</div>
     <div class="modal-title">Save Announcement?</div>
-    <div class="modal-message">If you click OK, this will replace the current announcement with your new changes.</div>
+    <div class="modal-message">If you click <strong style="color:#1a1a2e;">OK</strong>, this will replace the current announcement with your new changes.</div>
     <div class="modal-actions">
       <button class="btn-modal-ok" onclick="confirmSave()"><strong>OK</strong></button>
     </div>
@@ -825,6 +828,49 @@
 </div>
 
 <script>
+  // ── LOCALSTORAGE KEYS ──
+  const STORAGE_KEY = 'superapp_announcement';
+  const DEFAULT = {
+    title: 'RAYA RAYA RAYA PROMO 50% DISCOUNT FOR DIGITAL SPORT ARENA',
+    date:   '2025-03-06',
+    author: 'mis.intern@i-city.my'
+  };
+
+  // Load saved announcement or fall back to default
+  function loadAnnouncement() {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved ? JSON.parse(saved) : { ...DEFAULT };
+  }
+
+  // Save announcement to localStorage
+  function persistAnnouncement(data) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  }
+
+  // Render announcement data into all pages that display it
+  function renderAnnouncement() {
+    const a = loadAnnouncement();
+    const quoted = '"' + a.title.replace(/^"|"$/g, '') + '"';
+
+    // ── Announcement list card ──
+    document.getElementById('ann-card-title').textContent   = quoted;
+    document.getElementById('ann-card-author').textContent  = 'Author: ' + a.author;
+    document.getElementById('ann-card-date').textContent    = '📅 Publish Date: ' + a.date;
+
+    // ── Detail page ──
+    document.getElementById('detail-title').textContent     = quoted;
+    document.getElementById('detail-date').textContent      = a.date;
+    document.getElementById('detail-author').textContent    = a.author;
+
+    // ── Edit page — pre-fill textarea & locked fields ──
+    const editTA = document.getElementById('edit-title');
+    editTA.value = a.title.replace(/^"|"$/g, '');
+    autoQuote(editTA);
+    document.getElementById('edit-date-display').value   = a.date;
+    document.getElementById('edit-author-display').value = a.author;
+  }
+
+  // ── NAVIGATION ──
   function navigateTo(page, navEl) {
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     if (navEl) {
@@ -838,43 +884,58 @@
     const target = document.getElementById('page-' + page);
     if (target) target.classList.add('active');
     if (page === 'ainews') filterCards('active', 'ainews-grid', 'ainews-empty');
+    // Reset create textarea when opening create page
+    if (page === 'announcement-create') {
+      document.getElementById('create-title').value = '';
+    }
   }
 
-  function saveAnnouncement() {
-    document.getElementById('save-modal').classList.add('open');
-  }
-
-  function confirmSave() {
-    document.getElementById('save-modal').classList.remove('open');
-    navigateTo('announcement-detail', null);
-  }
-
+  // ── AUTO QUOTE ──
   function autoQuote(el) {
     let raw = el.value;
-    // Strip existing surrounding quotes first
     if (raw.startsWith('"')) raw = raw.slice(1);
-    if (raw.endsWith('"')) raw = raw.slice(0, -1);
-    if (raw === '') {
-      el.value = '';
-      return;
-    }
-    // Store cursor position relative to inner text
+    if (raw.endsWith('"'))   raw = raw.slice(0, -1);
+    if (raw === '') { el.value = ''; return; }
     const pos = el.selectionStart;
     el.value = '"' + raw + '"';
-    // Restore cursor inside the quotes
     const newPos = Math.min(pos + 1, el.value.length - 1);
     el.setSelectionRange(newPos, newPos);
   }
 
-  function saveNewAnnouncement() {
-    const title = document.getElementById('create-title').value.trim();
-    if (!title || title === '""') {
-      alert('Please enter an announcement title.');
-      return;
-    }
+  // ── SAVE (EDIT) ──
+  let pendingSaveSource = null;
+
+  function saveAnnouncement() {
+    const raw = document.getElementById('edit-title').value.replace(/^"|"$/g, '').trim();
+    if (!raw) { alert('Please enter an announcement title.'); return; }
+    pendingSaveSource = 'edit';
     document.getElementById('save-modal').classList.add('open');
   }
 
+  // ── SAVE (CREATE) ──
+  function saveNewAnnouncement() {
+    const raw = document.getElementById('create-title').value.replace(/^"|"$/g, '').trim();
+    if (!raw) { alert('Please enter an announcement title.'); return; }
+    pendingSaveSource = 'create';
+    document.getElementById('save-modal').classList.add('open');
+  }
+
+  // ── CONFIRM SAVE (modal OK) ──
+  function confirmSave() {
+    const a = loadAnnouncement();
+    if (pendingSaveSource === 'edit') {
+      a.title = document.getElementById('edit-title').value.replace(/^"|"$/g, '').trim();
+    } else if (pendingSaveSource === 'create') {
+      a.title = document.getElementById('create-title').value.replace(/^"|"$/g, '').trim();
+    }
+    persistAnnouncement(a);
+    renderAnnouncement();
+    document.getElementById('save-modal').classList.remove('open');
+    pendingSaveSource = null;
+    navigateTo('announcement', null);
+  }
+
+  // ── TABS ──
   function switchTab(el, status, gridId, emptyId) {
     el.closest('.tabs').querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     el.classList.add('active');
@@ -895,13 +956,9 @@
     if (empty) empty.style.display = visible === 0 ? 'block' : 'none';
   }
 
+  // ── INIT ──
   filterCards('active', 'ainews-grid', 'ainews-empty');
-
-  // Pre-quote the edit textarea on load
-  window.addEventListener('load', () => {
-    const el = document.getElementById('edit-title');
-    if (el) autoQuote(el);
-  });
+  renderAnnouncement();
 </script>
 </body>
 </html>
