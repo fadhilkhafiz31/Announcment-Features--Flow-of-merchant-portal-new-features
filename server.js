@@ -173,7 +173,7 @@ app.post('/oauth/token',
 const PORT = 3000;
 app.listen(PORT, () => {
   console.log('');
-  console.log('    Random App OAuth2 Server running!');
+  console.log('    🔐 OAuth2 Authentication Security Lab');
   console.log(`    http://localhost:${PORT}`);
   console.log('');
   console.log('  Demo credentials:');
